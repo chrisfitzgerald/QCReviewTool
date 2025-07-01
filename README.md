@@ -5,7 +5,7 @@ A simple, modern web app to randomly assign a smaller group of reviewers to a la
 ## Features
 - Enter reviewers and reviewees (comma or newline separated)
 - Randomly assigns all reviewees to reviewers
-- Modern, responsive design
+- Modern, responsive design, neat...
 
 ## How to Use
 
