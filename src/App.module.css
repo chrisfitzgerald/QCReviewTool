@@ -1,0 +1,422 @@
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: #e0e0e0;
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: #e0e0e0;
+  font-family: 'Inter', sans-serif;
+  padding-top: 4.5rem;
+}
+
+.card {
+  background: transparent;
+  border-radius: 0 0 1.5rem 1.5rem;
+  box-shadow: none;
+  padding: 2.5rem 2rem;
+  max-width: 98vw;
+  width: 98vw;
+  margin: 1.5rem auto;
+  transition: border-radius 0.18s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: #22223b;
+  text-align: center;
+}
+
+label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  display: block;
+  color: #4a4e69;
+}
+
+textarea {
+  width: 100%;
+  min-height: 60px;
+  border: 1px solid #c9c9c9;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin-bottom: 1.25rem;
+  font-size: 1rem;
+  resize: vertical;
+  font-family: inherit;
+}
+
+button {
+  background: #4f8cff;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-bottom: 1.5rem;
+}
+
+button:hover {
+  background: #2563eb;
+}
+
+.result {
+  margin-top: 2rem;
+  background: #f1f5fa;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  font-size: 1.05rem;
+  color: #22223b;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.tabStrip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  background: #e0e0e0;
+  border-radius: 0 0 1.5rem 1.5rem;
+  padding: 0.75rem 0.5rem 0.5rem 0.5rem;
+  margin-bottom: 2rem;
+  z-index: 100;
+  box-shadow: none;
+  transition: border-radius 0.18s;
+}
+
+.tab {
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #4a4e69;
+  padding: 0.5rem 1.2rem;
+  border-radius: 0.75rem 0.75rem 0.75rem 0.75rem;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, min-height 0.18s;
+  min-height: 44px;
+}
+
+.tab:hover {
+  background: #e0e7ef;
+  color: #22223b;
+}
+
+.activeTab {
+  background: #2563eb;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: none;
+  transition: background 0.18s, color 0.18s;
+}
+
+.mainFlex {
+  display: flex;
+  width: 75%;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.leftCol {
+  flex: 5;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.rightCol {
+  flex: 1.5;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 1400px;
+}
+
+@media (min-width: 900px) {
+  .mainFlex {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 3.5rem;
+  }
+  .leftCol {
+    flex: 0.6;
+    padding-right: 2.5rem;
+  }
+  .rightCol {
+    flex: 1.2;
+    max-width: 900px;
+    align-items: flex-start;
+  }
+  .card {
+    max-width: 1600px;
+    width: 98vw;
+    margin: 2.5rem auto;
+    padding: 2.5rem 2.5rem;
+    text-align: left;
+  }
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding-top: 5.5rem;
+  }
+  .card {
+    padding: 1.25rem 0.5rem;
+    max-width: 98vw;
+    border-radius: 0 0 1.2rem 1.2rem;
+  }
+  h1 {
+    font-size: 1.3rem;
+  }
+  .tabStrip {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+    border-radius: 0 0 1.2rem 1.2rem;
+  }
+  .tab {
+    min-width: 80px;
+    min-height: 44px;
+    font-size: 0.98rem;
+  }
+}
+
+.howToButton {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.75rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.howToButton:hover {
+  background: #4f8cff;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(34, 34, 59, 0.35);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalContent {
+  background: #fff;
+  border-radius: 1.2rem;
+  box-shadow: none;
+  padding: 2.5rem 2rem;
+  max-width: 480px;
+  width: 90vw;
+  color: #22223b;
+  font-size: 1.08rem;
+  line-height: 1.6;
+  transition: border-radius 0.18s;
+}
+
+.closeModalButton {
+  background: #e63946;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.6rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.closeModalButton:hover {
+  background: #b71c1c;
+}
+
+.muted {
+  color: #aaa;
+}
+
+.secondaryText {
+  color: #555;
+  font-size: 0.95rem;
+  margin-bottom: 0.7rem;
+}
+
+.errorText {
+  color: #e63946;
+  margin-bottom: 1rem;
+}
+
+.listContainer {
+  background: #f8fafc;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  min-height: 60px;
+  margin-bottom: 0.5rem;
+}
+
+.assignmentHeading {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.noListStyle {
+  padding-left: 0;
+  list-style: none;
+}
+
+.assignmentItem {
+  margin-bottom: 1rem;
+}
+
+.assignmentSubList {
+  margin: 0.5rem 0 0 1.2rem;
+}
+
+.centered {
+  text-align: center;
+  padding: 2rem;
+}
+
+.maxWidthButton {
+  margin-bottom: 1rem;
+  max-width: 200px;
+}
+
+.marginAutoBlock {
+  margin: 2rem auto 1rem auto;
+  display: block;
+}
+
+.marginTop {
+  margin-top: 1.5rem;
+}
+
+.hamburgerMenuWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.hamburgerButton {
+  background: none;
+  border: none;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.hamburgerIcon {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 28px;
+  height: 22px;
+}
+.hamburgerIcon span {
+  display: block;
+  width: 100%;
+  height: 4px;
+  background: #4a4e69;
+  margin: 2px 0;
+  border-radius: 2px;
+  transition: background 0.2s;
+}
+
+.tabsDropdown {
+  position: fixed;
+  top: 60px;
+  left: 12px;
+  right: 12px;
+  background: #fff;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 12px rgba(34,34,59,0.18);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  padding: 0.5rem 0;
+  border: 2px solid #2563eb;
+}
+.tabsDropdown button {
+  background: #e0e7ef;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #22223b;
+  padding: 0.75rem 1.2rem;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.18s, color 0.18s;
+  margin: 0.1rem 0.5rem;
+}
+.tabsDropdown button:hover, .tabsDropdown .activeTab {
+  background: #2563eb;
+  color: #fff;
+}
+
+@media (max-width: 750px) {
+  .tabStrip {
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    gap: 0;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  .tabStrip .tab {
+    display: none;
+  }
+  .hamburgerMenuWrapper {
+    display: flex;
+  }
+}
+
+@media (min-width: 751px) {
+  .hamburgerMenuWrapper {
+    display: none;
+  }
+} 
