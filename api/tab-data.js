@@ -1,5 +1,9 @@
 const { MongoClient } = require('mongodb');
 
+// const uri = process.env.MONGODB_URI;
+// if (!uri) {
+//   throw new Error('MONGODB_URI environment variable not set');
+// }
 const uri = process.env.MONGODB_URI;
 if (!uri) {
   throw new Error('MONGODB_URI environment variable not set');
@@ -36,7 +40,18 @@ module.exports = async function (req, res) {
     }
     // Only update assignments if provided
     const update = { qcers: qcers || [], qcTargets: qcTargets || [] };
-    if (assignments !== undefined) {
+    let finalAssignments = assignments;
+    if (assignments === undefined && Array.isArray(qcers) && Array.isArray(qcTargets)) {
+      // Auto-assign logic: distribute qcTargets to qcers as evenly as possible
+      finalAssignments = {};
+      qcers.forEach(qcer => { finalAssignments[qcer] = []; });
+      for (let i = 0; i < qcTargets.length; i++) {
+        const qcer = qcers[i % qcers.length];
+        finalAssignments[qcer].push(qcTargets[i]);
+      }
+      update.assignments = finalAssignments;
+      update.lastAssigned = new Date();
+    } else if (assignments !== undefined) {
       update.assignments = assignments;
       update.lastAssigned = new Date();
     }
@@ -45,7 +60,7 @@ module.exports = async function (req, res) {
       { $set: update },
       { upsert: true }
     );
-    res.status(200).json({ success: true });
+    res.status(200).json({ success: true, assignments: update.assignments });
   } else {
     res.status(405).json({ error: 'Method not allowed' });
   }

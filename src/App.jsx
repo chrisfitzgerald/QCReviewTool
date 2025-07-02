@@ -10,37 +10,79 @@ const TEAM_VERTICALS = [
   'Privacy Preservation and Collection',
 ];
 
-function parseNames(input) {
+const ROLES = ["AA", "AS", "Senior", "Lead"];
+const ROLE_QUOTA = { AA: 5, AS: 5, Senior: 3, Lead: 3 };
+
+function parseQCers(input) {
   return input
     .split(/[\n,]+/)
-    .map(name => name.trim())
+    .map((name) => name.trim())
     .filter(Boolean);
 }
 
-function assignQCers(qcers, qcTargets) {
-  // Shuffle QC Targets
-  const shuffled = [...qcTargets].sort(() => Math.random() - 0.5);
-  const assignments = {};
-  qcers.forEach((qcer) => {
-    assignments[qcer] = [];
-  });
-  const skippedTargets = [];
+function parseQCTargets(input) {
+  // For migration: parse lines like "Name (Role)" or just "Name"
+  return input
+    .split(/[\n,]+/)
+    .map((line) => {
+      const match = line.match(/^(.*?)\s*\((AA|AS|Senior|Lead)\)$/i);
+      if (match) {
+        return { name: match[1].trim(), role: match[2] };
+      }
+      return { name: line.trim(), role: "AA" };
+    })
+    .filter((obj) => obj.name);
+}
 
-  shuffled.forEach((qcTarget) => {
-    // Find all eligible QCers (not the same as the target)
-    const eligibleQCers = qcers.filter(qcer => qcer !== qcTarget);
-    if (eligibleQCers.length === 0) {
-      skippedTargets.push(qcTarget);
-      return;
+function assignQCers(qcers, qcTargets) {
+  // Run the assignment logic up to 10 times, pick the most balanced result
+  let bestAssignments = null;
+  let bestSkipped = null;
+  let bestDiff = Infinity;
+  let bestMax = Infinity;
+  for (let run = 0; run < 20; run++) {
+    // Shuffle QC Targets
+    const shuffled = [...qcTargets].sort(() => Math.random() - 0.5);
+    const assignments = {};
+    qcers.forEach((qcer) => {
+      assignments[qcer] = [];
+    });
+    // Track weighted value per QCer
+    const qcerWeighted = Object.fromEntries(qcers.map((q) => [q, 0]));
+    const skippedTargets = [];
+
+    shuffled.forEach((qcTarget) => {
+      // Exclude self-assignment
+      const eligibleQCers = qcers.filter(
+        (qcer) => qcer !== qcTarget.name
+      );
+      if (eligibleQCers.length === 0) {
+        skippedTargets.push(qcTarget.name);
+        return;
+      }
+      // Find the eligible QCer(s) with the lowest weighted total
+      let minWeighted = Math.min(...eligibleQCers.map((qcer) => qcerWeighted[qcer]));
+      const leastLoadedQCers = eligibleQCers.filter((qcer) => qcerWeighted[qcer] === minWeighted);
+      // Randomly pick one if there's a tie
+      const chosenQCer = leastLoadedQCers[Math.floor(Math.random() * leastLoadedQCers.length)];
+      assignments[chosenQCer].push({ name: qcTarget.name, role: qcTarget.role });
+      qcerWeighted[chosenQCer] += ROLE_QUOTA[qcTarget.role] || 0;
+    });
+    const weights = Object.values(qcerWeighted);
+    const max = Math.max(...weights);
+    const min = Math.min(...weights);
+    const diff = max - min;
+    if (
+      diff < bestDiff ||
+      (diff === bestDiff && max < bestMax)
+    ) {
+      bestAssignments = assignments;
+      bestSkipped = skippedTargets;
+      bestDiff = diff;
+      bestMax = max;
     }
-    // Find the eligible QCer(s) with the fewest assignments
-    let minCount = Math.min(...eligibleQCers.map(qcer => assignments[qcer].length));
-    const leastLoadedQCers = eligibleQCers.filter(qcer => assignments[qcer].length === minCount);
-    // Randomly pick one if there's a tie
-    const chosenQCer = leastLoadedQCers[Math.floor(Math.random() * leastLoadedQCers.length)];
-    assignments[chosenQCer].push(qcTarget);
-  });
-  return { assignments, skippedTargets };
+  }
+  return { assignments: bestAssignments, skippedTargets: bestSkipped };
 }
 
 export default function App() {
@@ -54,10 +96,13 @@ export default function App() {
   const [editingQCers, setEditingQCers] = useState(false);
   const [editingQCTargets, setEditingQCTargets] = useState(false);
   const [qcersDraft, setQCersDraft] = useState('');
-  const [qcTargetsDraft, setQCTargetsDraft] = useState('');
+  const [qcTargetsDraft, setQCTargetsDraft] = useState([]);
   const [showHowTo, setShowHowTo] = useState(false);
   const [showTabsMenu, setShowTabsMenu] = useState(false);
   const [isMobileTabs, setIsMobileTabs] = useState(window.innerWidth < 750);
+  const [qcTargets, setQCTargets] = useState([]);
+  const [animating, setAnimating] = useState(false);
+  const [animationProgress, setAnimationProgress] = useState(0);
 
   // Load data for the active tab
   useEffect(() => {
@@ -66,7 +111,17 @@ export default function App() {
       .then(res => res.json())
       .then(data => {
         setQCersInput((data.qcers || []).join(', '));
-        setQCTargetsInput((data.qcTargets || []).join(', '));
+        setQCTargetsInput(
+          Array.isArray(data.qcTargets)
+            ? data.qcTargets
+                .map(q =>
+                  typeof q === 'string'
+                    ? q
+                    : (q && q.name ? `${q.name} (${q.role || 'AA'})` : '')
+                )
+                .join(', ')
+            : ''
+        );
         setAssignments(data.assignments || null);
         setLastAssigned(data.lastAssigned || null);
         setError('');
@@ -87,6 +142,16 @@ export default function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // On load, parse loaded qcTargetsInput (string) to array if needed
+  useEffect(() => {
+    // If backend returns string, parse; else use as is
+    if (typeof qcTargetsInput === "string") {
+      setQCTargets(parseQCTargets(qcTargetsInput));
+    } else if (Array.isArray(qcTargetsInput)) {
+      setQCTargets(qcTargetsInput);
+    }
+  }, [qcTargetsInput]);
+
   // Save data to backend
   const saveTabData = (qcers, qcTargets, assignments) => {
     fetch('/api/tab-data', {
@@ -101,9 +166,30 @@ export default function App() {
     });
   };
 
+  // Animated assignment reveal
+  const animateAssignments = async (qcers, qcTargets, assignmentsObj) => {
+    setAnimating(true);
+    // Prepare empty assignments
+    let tempAssignments = {};
+    qcers.forEach(qcer => { tempAssignments[qcer] = []; });
+    setAssignments({ ...tempAssignments });
+    let flat = [];
+    Object.entries(assignmentsObj).forEach(([qcer, targets]) => {
+      targets.forEach(target => flat.push({ qcer, target }));
+    });
+    for (let i = 0; i < flat.length; i++) {
+      const { qcer, target } = flat[i];
+      tempAssignments[qcer] = [...tempAssignments[qcer], target];
+      setAssignments({ ...tempAssignments });
+      setAnimationProgress(((i + 1) / flat.length) * 100);
+      await new Promise(res => setTimeout(res, 200));
+    }
+    setAnimating(false);
+    setAnimationProgress(0);
+  };
+
   const handleAssign = () => {
-    const qcers = parseNames(qcersInput);
-    const qcTargets = parseNames(qcTargetsInput);
+    const qcers = parseQCers(qcersInput);
     if (qcers.length === 0 || qcTargets.length === 0) {
       setError('Please enter at least one QCer and one QC Target.');
       setAssignments(null);
@@ -116,7 +202,8 @@ export default function App() {
     }
     setError('');
     const { assignments: newAssignments, skippedTargets } = assignQCers(qcers, qcTargets);
-    setAssignments(newAssignments);
+    // Animate the assignment process
+    animateAssignments(qcers, qcTargets, newAssignments);
     saveTabData(qcers, qcTargets, newAssignments);
     setLastAssigned(new Date());
     if (skippedTargets.length > 0) {
@@ -136,11 +223,36 @@ export default function App() {
 
   // New: Save lists without assigning
   const handleSaveLists = () => {
-    const qcers = parseNames(qcersInput);
-    const qcTargets = parseNames(qcTargetsInput);
+    const qcers = parseQCers(qcersInput);
+    const qcTargets = parseQCTargets(qcTargetsInput);
     saveTabData(qcers, qcTargets, assignments); // Save current lists, keep assignments unchanged
     setError('Lists saved!');
     setTimeout(() => setError(''), 1500);
+  };
+
+  // Save handler for table
+  const handleSaveQCTargets = () => {
+    setQCTargets(qcTargetsDraft);
+    setEditingQCTargets(false);
+    saveTabData(parseQCers(qcersInput), qcTargetsDraft, assignments);
+  };
+
+  // Table row handlers
+  const handleQCTargetNameChange = (idx, value) => {
+    setQCTargetsDraft((draft) =>
+      draft.map((t, i) => (i === idx ? { ...t, name: value } : t))
+    );
+  };
+  const handleQCTargetRoleChange = (idx, value) => {
+    setQCTargetsDraft((draft) =>
+      draft.map((t, i) => (i === idx ? { ...t, role: value } : t))
+    );
+  };
+  const handleAddQCTarget = () => {
+    setQCTargetsDraft((draft) => [...draft, { name: "", role: "AA" }]);
+  };
+  const handleRemoveQCTarget = (idx) => {
+    setQCTargetsDraft((draft) => draft.filter((_, i) => i !== idx));
   };
 
   return (
@@ -222,8 +334,8 @@ export default function App() {
                         setQCersInput(qcersDraft);
                         setEditingQCers(false);
                         // Persist the new QCers list to backend
-                        const qcers = parseNames(qcersDraft);
-                        const qcTargets = parseNames(qcTargetsInput);
+                        const qcers = parseQCers(qcersDraft);
+                        const qcTargets = parseQCTargets(qcTargetsInput);
                         saveTabData(qcers, qcTargets, assignments);
                       }} className={styles.marginRight}>Save</button>
                       <button onClick={() => {
@@ -235,65 +347,103 @@ export default function App() {
                     <>
                       <div className={styles.listContainer}>
                         <ul className={styles.noListStyle}>
-                          {parseNames(qcersInput).length === 0 ? (
+                          {parseQCers(qcersInput).length === 0 ? (
                             <li className={styles.muted}>No QCers listed</li>
                           ) : (
-                            parseNames(qcersInput).map((name, idx) => <li key={idx}>{name}</li>)
+                            parseQCers(qcersInput).map((name, idx) => <li key={idx}>{name}</li>)
                           )}
                         </ul>
                       </div>
                       <button onClick={() => {
                         setEditingQCers(true);
-                        setQCersDraft(parseNames(qcersInput).join('\n'));
+                        setQCersDraft(parseQCers(qcersInput).join('\n'));
                       }}>Edit</button>
                     </>
                   )}
                 </div>
                 <div>
-                  <label htmlFor="qcTargets">QC Targets</label>
+                  <label>QC Targets</label>
                   {editingQCTargets ? (
                     <>
-                      <textarea
-                        id="qcTargets"
-                        value={qcTargetsDraft}
-                        onChange={e => setQCTargetsDraft(e.target.value)}
-                        placeholder="e.g. Carol, Dave, Eve"
-                      />
-                      <button onClick={() => {
-                        setQCTargetsInput(qcTargetsDraft);
-                        setEditingQCTargets(false);
-                        // Persist the new QC Targets list to backend
-                        const qcers = parseNames(qcersInput);
-                        const qcTargets = parseNames(qcTargetsDraft);
-                        saveTabData(qcers, qcTargets, assignments);
-                      }} className={styles.marginRight}>Save</button>
-                      <button onClick={() => {
-                        setEditingQCTargets(false);
-                        setQCTargetsDraft(qcTargetsInput);
-                      }}>Cancel</button>
+                      <table className={styles.qcTable}>
+                        <thead>
+                          <tr>
+                            <th>Name</th>
+                            <th>Role</th>
+                            <th></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {qcTargetsDraft.map((target, idx) => (
+                            <tr key={idx}>
+                              <td>
+                                <input
+                                  type="text"
+                                  value={target.name}
+                                  onChange={e => handleQCTargetNameChange(idx, e.target.value)}
+                                  placeholder="e.g. Carol"
+                                />
+                              </td>
+                              <td>
+                                <select
+                                  value={target.role}
+                                  onChange={e => handleQCTargetRoleChange(idx, e.target.value)}
+                                >
+                                  {ROLES.map(role => (
+                                    <option key={role} value={role}>{role}</option>
+                                  ))}
+                                </select>
+                              </td>
+                              <td>
+                                <button type="button" onClick={() => handleRemoveQCTarget(idx)}>-</button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <button type="button" onClick={handleAddQCTarget}>Add Target</button>
+                      <button onClick={handleSaveQCTargets} className={styles.marginRight}>Save</button>
+                      <button onClick={() => { setEditingQCTargets(false); setQCTargetsDraft(qcTargets); }}>Cancel</button>
                     </>
                   ) : (
                     <>
                       <div className={styles.listContainer}>
-                        <ul className={styles.noListStyle}>
-                          {parseNames(qcTargetsInput).length === 0 ? (
-                            <li className={styles.muted}>No QC Targets listed</li>
-                          ) : (
-                            parseNames(qcTargetsInput).map((name, idx) => <li key={idx}>{name}</li>)
-                          )}
-                        </ul>
+                        <table className={styles.qcTable}>
+                          <thead>
+                            <tr>
+                              <th>Name</th>
+                              <th>Role</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {qcTargets.length === 0 ? (
+                              <tr><td colSpan={2} className={styles.muted}>No QC Targets listed</td></tr>
+                            ) : (
+                              qcTargets.map((target, idx) => (
+                                <tr key={idx}>
+                                  <td>{target.name}</td>
+                                  <td>{target.role}</td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
                       </div>
-                      <button onClick={() => {
-                        setEditingQCTargets(true);
-                        setQCTargetsDraft(parseNames(qcTargetsInput).join('\n'));
-                      }}>Edit</button>
+                      <button onClick={() => { setEditingQCTargets(true); setQCTargetsDraft(qcTargets); }}>Edit</button>
                     </>
                   )}
                 </div>
               </div>
               {/* Right column: Assign button, error, and results */}
               <div className={styles.rightCol}>
-                <button onClick={handleAssign} className={styles.maxWidthButton}>Assign QCers</button>
+                <button onClick={handleAssign} className={styles.maxWidthButton} disabled={animating}>
+                  {animating ? 'Assigning...' : 'Assign QCers'}
+                </button>
+                {animating && (
+                  <div className={styles.secondaryText} style={{ marginBottom: '1rem' }}>
+                    Distributing assignments... {animationProgress.toFixed(0)}%
+                  </div>
+                )}
                 {error && <div className={styles.errorText}>{error}</div>}
                 {assignments && (
                   <div className={styles.result}>
@@ -304,16 +454,31 @@ export default function App() {
                     )}
                     <h2 className={styles.assignmentHeading}>Assignments</h2>
                     <ul className={styles.noListStyle}>
-                      {Object.entries(assignments).map(([qcer, qcTargets]) => (
-                        <li key={qcer} className={styles.assignmentItem}>
-                          <strong>{qcer}:</strong>
-                          <ul className={styles.assignmentSubList}>
-                            {qcTargets.map(qt => (
-                              <li key={qt}>{qt}</li>
-                            ))}
-                          </ul>
-                        </li>
-                      ))}
+                      {Object.entries(assignments).map(([qcer, assignedTargets]) => {
+                        // Filter out empty assignments
+                        const filteredTargets = assignedTargets.filter(({ name }) => name && name.trim() !== "");
+                        // Tally by role
+                        const roleCounts = {};
+                        let weightedTotal = 0;
+                        filteredTargets.forEach(({ role }) => {
+                          roleCounts[role] = (roleCounts[role] || 0) + 1;
+                          weightedTotal += ROLE_QUOTA[role] || 0;
+                        });
+                        // Build breakdown string
+                        const breakdown = Object.entries(roleCounts)
+                          .map(([role, count]) => `${count} ${role} = ${count * (ROLE_QUOTA[role] || 0)}`)
+                          .join(' + ');
+                        return (
+                          <li key={qcer} className={styles.assignmentItem}>
+                            <strong>{qcer} ({weightedTotal} ticket{weightedTotal !== 1 ? 's' : ''}{breakdown ? `: ${breakdown}` : ''})</strong>:
+                            <ul className={styles.assignmentSubList}>
+                              {filteredTargets.map(({ name, role }) => (
+                                <li key={name + role}>{name} ({role})</li>
+                              ))}
+                            </ul>
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                 )}
