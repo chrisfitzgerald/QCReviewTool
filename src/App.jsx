@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import styles from './App.module.css';
-import { Analytics } from "@vercel/analytics/next";
 
 const TEAM_VERTICALS = [
   'Processing & Imaging',
@@ -258,7 +257,6 @@ export default function App() {
 
   return (
     <>
-      <Analytics />
       <div className={styles.tabStrip}>
         {isMobileTabs ? (
           <div className={styles.hamburgerMenuWrapper}>
