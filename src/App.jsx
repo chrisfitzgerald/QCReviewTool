@@ -504,19 +504,22 @@ export default function App() {
                 <b>Select a Team Vertical:</b> Click a tab at the top to choose the relevant team or project area.
               </li>
               <li>
-                <b>View or Edit QCers and QC Targets:</b> QCers are reviewers; QC Targets are those being reviewed.
-                Click <b>Edit</b> to modify either list, then <b>Save</b>.
+                <b>View or Edit QCers and QC Targets:</b> QCers are reviewers; QC Targets are those being reviewed.<br/>
+                Click <b>Edit</b> to modify either list, then <b>Save</b>.<br/>
+                <b>For QC Targets:</b> When editing, you can now select a <b>role</b> (AA, AS, Senior, Lead) for each target using the dropdown next to their name. This role determines the quota weight for assignment balancing.
               </li>
               <li>
-                <b>Assign QCers:</b> Click <b>Assign QCers</b> to randomly assign reviewers, ensuring no one reviews themselves.
+                <b>Assign QCers:</b> Click <b>Assign QCers</b> to randomly assign reviewers, ensuring no one reviews themselves.<br/>
+                <b>Balanced by Role:</b> The tool will balance assignments so that each QCer receives a fair distribution of targets, taking into account the role quotas (e.g., AA/AS/Senior/Lead). Higher-weighted roles count more toward a QCer's assignment load.
               </li>
               <li>
-                <b>Review Assignments:</b> See the assignments and last assigned time on the right.
+                <b>Review Assignments:</b> See the assignments and last assigned time on the right. Each QCer's assignment shows the total weighted tickets and a breakdown by role.
               </li>
             </ol>
             <ul>
               <li><b>No Self-Review:</b> The tool never assigns someone to review themselves. <b>Note:</b> This check is based on exact text matches between the QCers and QC Targets lists. If there is any difference in spelling, extra spaces, or formatting, the check will not work as expected. Please ensure names are entered consistently in both lists.</li>
               <li><b>Unassigned Targets:</b> If a QC Target can't be assigned, a warning appears.</li>
+              <li><b>Saving Lists:</b> You can save your lists without assigning by clicking <b>Save</b> after editing.</li>
             </ul>
             <button
               className={`${styles.closeModalButton} ${styles.marginTop}`}
