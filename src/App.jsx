@@ -381,7 +381,7 @@ export default function App() {
                                   type="text"
                                   value={target.name}
                                   onChange={e => handleQCTargetNameChange(idx, e.target.value)}
-                                  placeholder="e.g. Carol"
+                                  placeholder="e.g. Gilbert"
                                 />
                               </td>
                               <td>
@@ -473,7 +473,9 @@ export default function App() {
                             <strong>{qcer} ({weightedTotal} ticket{weightedTotal !== 1 ? 's' : ''}{breakdown ? `: ${breakdown}` : ''})</strong>:
                             <ul className={styles.assignmentSubList}>
                               {filteredTargets.map(({ name, role }) => (
-                                <li key={name + role}>{name} ({role})</li>
+                                <li key={name + role}>
+                                  {name} ({ROLE_QUOTA[role]})
+                                </li>
                               ))}
                             </ul>
                           </li>
@@ -532,4 +534,4 @@ export default function App() {
       )}
     </>
   );
-} 
+}
