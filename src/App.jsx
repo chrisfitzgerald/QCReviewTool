@@ -465,12 +465,12 @@ export default function App() {
                           weightedTotal += ROLE_QUOTA[role] || 0;
                         });
                         // Build breakdown string
-                        const breakdown = Object.entries(roleCounts)
-                          .map(([role, count]) => `${count} ${role} = ${count * (ROLE_QUOTA[role] || 0)}`)
-                          .join(' + ');
+                        //const breakdown = Object.entries(roleCounts)
+                        //  .map(([role, count]) => `${count} ${role} = ${count * (ROLE_QUOTA[role] || 0)}`)
+                        //  .join(' + ');
                         return (
                           <li key={qcer} className={styles.assignmentItem}>
-                            <strong>{qcer} ({weightedTotal} ticket{weightedTotal !== 1 ? 's' : ''}{breakdown ? `: ${breakdown}` : ''})</strong>:
+                            <strong>{qcer} ({weightedTotal} ticket{weightedTotal !== 1 ? 's' : ''})</strong>:
                             <ul className={styles.assignmentSubList}>
                               {filteredTargets.map(({ name, role }) => (
                                 <li key={name + role}>
