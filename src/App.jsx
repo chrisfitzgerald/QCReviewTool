@@ -464,13 +464,13 @@ export default function App() {
                           roleCounts[role] = (roleCounts[role] || 0) + 1;
                           weightedTotal += ROLE_QUOTA[role] || 0;
                         });
-                        // Build breakdown string
+                        // Build breakdown string to troubleshoot weights if needed
                         //const breakdown = Object.entries(roleCounts)
                         //  .map(([role, count]) => `${count} ${role} = ${count * (ROLE_QUOTA[role] || 0)}`)
                         //  .join(' + ');
                         return (
                           <li key={qcer} className={styles.assignmentItem}>
-                            <strong>{qcer} ({weightedTotal} ticket{weightedTotal !== 1 ? 's' : ''})</strong>:
+                            <strong>{qcer} ({weightedTotal} ticket{weightedTotal !== 1 ? 's' : ''}{/*{breakdown ? `: ${breakdown}` : ''}*/})</strong>:
                             <ul className={styles.assignmentSubList}>
                               {filteredTargets.map(({ name, role }) => (
                                 <li key={name + role}>
@@ -515,7 +515,7 @@ export default function App() {
                 <b>Balanced by Role:</b> The tool will balance assignments so that each QCer receives a fair distribution of targets, taking into account the role quotas (e.g., AA/AS/Senior/Lead). Higher-weighted roles count more toward a QCer's assignment load.
               </li>
               <li>
-                <b>Review Assignments:</b> See the assignments and last assigned time on the right. Each QCer's assignment shows the total weighted tickets and a breakdown by role.
+                <b>Review Assignments:</b> See the assignments and last assigned time on the right. Each QCer's assignment shows the total weighted tickets by role.
               </li>
             </ol>
             <ul>
